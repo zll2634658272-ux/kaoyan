@@ -22,7 +22,7 @@
   <!-- ======== 侧边栏 ======== -->
   <aside class="sidebar">
     <div class="logo">
-      <span class="logo-emoji">📚</span>
+      <span class="logo-avatar" id="logoAvatar">📚</span>
       <div class="logo-text">
         <b>考研工作台</b>
         <small>坚持就是胜利</small>
@@ -105,8 +105,8 @@
       <div class="pomo-wrap">
         <div class="pomo-ring">
           <svg viewBox="0 0 220 220" class="ring-svg">
-            <circle cx="110" cy="110" r="98" class="ring-bg"/>
-            <circle cx="110" cy="110" r="98" class="ring-fg" id="ringFg"/>
+            <circle cx="110" cy="110" r="98" class="ring-bg" fill="none" stroke="#F0F6F4" stroke-width="12"/>
+            <circle cx="110" cy="110" r="98" class="ring-fg" id="ringFg" fill="none" stroke="#5BB8A3" stroke-width="12" stroke-linecap="round"/>
           </svg>
           <div class="ring-center">
             <div class="ring-time" id="pomoTime">25:00</div>
@@ -297,6 +297,18 @@
           <p class="hint">因为不同专业大纲不同，这里可以自己录入专业课复习任务（如章节名），系统会按顺序每天推送一课。</p>
           <div id="customPlanEditor"></div>
           <button class="btn btn-primary" id="btnCustomSave">保存专业课任务</button>
+        </div>
+        <div class="card span-2">
+          <div class="card-head"><h3>🎨 个人头像</h3></div>
+          <div class="avatar-set">
+            <img id="avatarPreview" class="avatar-preview" alt="头像">
+            <div>
+              <button class="btn btn-ghost" id="btnAvatarUpload">📷 上传头像</button>
+              <input type="file" id="avatarInput" accept="image/*" style="display:none">
+              <button class="btn btn-danger" id="btnAvatarClear" style="margin-left:8px">🗑️ 移除头像</button>
+              <p class="hint" style="margin-top:8px">头像显示在工作台左上角，并随云同步到所有设备。</p>
+            </div>
+          </div>
         </div>
         <div class="card span-2">
           <div class="card-head"><h3>💾 数据备份</h3></div>

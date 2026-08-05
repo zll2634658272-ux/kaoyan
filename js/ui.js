@@ -50,11 +50,16 @@ function renderHome(){
   document.getElementById('homeTitle').textContent = doneN === tasks.length && tasks.length > 0 ? '全部完成！太棒了 🎉' : '今天也要加油鸭 🦆';
   document.getElementById('homeSub').textContent = $D.todayCn() + ' · 完成 ' + doneN + '/' + tasks.length + ' 项';
 
-  // 今日任务（前 6 项）
+  // 今日任务（前 6 项，带完成状态显示）
   const box = document.getElementById('homeTasks');
+  const snapNow = Store.get('tasksSnap', []);
   if(!tasks.length){ box.innerHTML = '<div class="empty">今天没有任务，好好休息～</div>'; }
   else{
-    box.innerHTML = tasks.slice(0, 6).map(t => taskItemHTML(t)).join('')
+    box.innerHTML = tasks.slice(0, 6).map(t => {
+      const s = snapNow.find(x => x.id === t.id);
+      const isDone = s ? s.done : false;
+      return taskItemHTML(t, isDone);
+    }).join('')
       + (tasks.length > 6 ? '<div class="empty" style="padding:10px 0">还有 '+(tasks.length-6)+' 项，去「每日任务」查看 ›</div>' : '');
   }
   bindTaskChecks(box);
@@ -87,8 +92,9 @@ function examPlanHTML(){
 }
 
 /* ---------- 任务卡片 HTML ---------- */
-function taskItemHTML(t){
+function taskItemHTML(t, isDone){
   const isBacklog = t.flag === 'backlog';
+  const doneClass = isDone ? ' done' : '';
   const tags = [];
   if(t.subject && t.subject !== 'custom') tags.push('<span class="tag '+tagFor(t.subject)+'">'+SUBJECT_NAMES[t.subject]+'</span>');
   if(t.subject === 'custom') tags.push('<span class="tag tag-custom">专业课</span>');
@@ -99,7 +105,7 @@ function taskItemHTML(t){
   if(t.src) tags.push('<span class="tag tag-custom">'+esc(t.src)+'</span>');
   if(t.est) tags.push('<span class="task-extra">约 '+t.est+' 分钟</span>');
   const extra = t.stage ? '<span class="task-extra">'+STAGE_NAMES[t.stage]+'</span>' : '';
-  return '<div class="task-item" data-id="'+esc(t.id)+'" data-type="'+t.type+'">'
+  return '<div class="task-item'+doneClass+'" data-id="'+esc(t.id)+'" data-type="'+t.type+'">'
     + '<span class="task-check" data-check="1">✓</span>'
     + '<div class="task-body"><div class="task-title">'+esc(t.title)+'</div>'
     + '<div class="task-meta">'+tags.join('')+extra+'</div></div></div>';
@@ -142,12 +148,13 @@ function renderTasks(){
   const totalN = tasks.length;
   const pct = totalN ? Math.round(doneN/totalN*100) : 0;
 
-  // 进度环
+  // 进度环（SVG 颜色内联兜底，防止 CSS 加载异常时显示为黑色圆圈）
   const C = 2 * Math.PI * 38;
   document.getElementById('tasksProgress').innerHTML =
     '<svg width="88" height="88" viewBox="0 0 88 88"><defs><linearGradient id="pgrad" x1="0" y1="0" x2="1" y2="1">'
     + '<stop offset="0%" stop-color="#5BB8A3"/><stop offset="100%" stop-color="#8ED3C3"/></linearGradient></defs>'
-    + '<circle class="pbg" cx="44" cy="44" r="38"/><circle class="pfg" cx="44" cy="44" r="38" stroke-dasharray="'+C+'" stroke-dashoffset="'+(C*(1-pct/100))+'"/></svg>'
+    + '<circle class="pbg" cx="44" cy="44" r="38" fill="none" stroke="#EAF5F2" stroke-width="10"/>'
+    + '<circle class="pfg" cx="44" cy="44" r="38" fill="none" stroke="url(#pgrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+(C*(1-pct/100))+'"/></svg>'
     + '<div class="progress-info"><b>今日完成 '+doneN+' / '+totalN+'</b><p>'+ ($D.cnWeek(today)) + ' · '
     + (pct===100 && totalN>0 ? '全部搞定，奖励自己休息一下 🎉' : pct>=60 ? '进度过半，继续保持！' : '按顺序完成，未完成的会自动顺延到明天') + '</p></div>';
 
@@ -497,6 +504,29 @@ function renderNotes(){
 }
 function subjKey(name){ return { '数学二':'math', '英语一':'english', '政治':'politics', '专业课':'custom' }[name] || 'custom'; }
 
+/* ---------- 头像 ---------- */
+function renderAvatar(){
+  const avatar = Store.get('avatar', '');
+  const la = document.getElementById('logoAvatar');
+  if(la){
+    if(avatar){
+      la.innerHTML = '<img src="' + avatar + '" alt="头像">';
+    } else {
+      la.innerHTML = '📚';
+    }
+  }
+  const ap = document.getElementById('avatarPreview');
+  if(ap){
+    if(avatar){
+      ap.src = avatar;
+      ap.style.display = '';
+    } else {
+      ap.removeAttribute('src');
+      ap.style.display = 'none';
+    }
+  }
+}
+
 /* ---------- 设置页 ---------- */
 function renderSettings(){
   const st = getSettings();
@@ -515,6 +545,7 @@ function renderSettings(){
   document.getElementById('setPomoBreak').value = st.pomoBreak;
   document.getElementById('setVocabPerDay').value = st.vocabPerDay;
   renderCloudBox();
+  renderAvatar();
   renderCustomEditor();
 }
 
@@ -652,6 +683,28 @@ document.addEventListener('DOMContentLoaded', () => {
     location.reload();
   };
 
+  // 头像：上传 / 移除
+  document.getElementById('btnAvatarUpload').onclick = () => document.getElementById('avatarInput').click();
+  document.getElementById('avatarInput').onchange = async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      const img = await compressImage(file, 240, 0.85);
+      Store.set('avatar', img);
+      renderAvatar();
+      toast('✅ 头像已更新（随云同步到所有设备）');
+    }catch(err){
+      toast('图片处理失败：' + (err.message || '请重试'));
+    }
+    e.target.value = '';
+  };
+  document.getElementById('btnAvatarClear').onclick = () => {
+    if(!confirm('移除头像？')) return;
+    Store.set('avatar', '');
+    renderAvatar();
+    toast('已移除头像');
+  };
+
   // 错题本
   document.getElementById('noteAdd').onclick = addNote;
   document.getElementById('noteInput').addEventListener('keydown', e => { if(e.key === 'Enter') addNote(); });
@@ -766,6 +819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ? Cloud.pull().catch(() => {})
     : Sync.load();
   bootSync.then(() => {
+    renderAvatar();
     const qp = new URLSearchParams(location.search);
     const target = qp.get('page');
     switchPage(['home','tasks','pomodoro','vocab','stats','notes','settings'].includes(target) ? target : 'home');

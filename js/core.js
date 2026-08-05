@@ -511,7 +511,7 @@ function heatmapData(weeks){
 
 /* ---------- 数据备份 ---------- */
 function exportData(){
-  const keys = ['settings','pos','backlog','completed','tasksSnap','tasksToday','lastDate','dailyStats','vocab','pomo','notes','customPlan','sportStart','doneStack','cloud'];
+  const keys = ['settings','pos','backlog','completed','tasksSnap','tasksToday','lastDate','dailyStats','vocab','pomo','notes','customPlan','sportStart','doneStack','cloud','avatar'];
   const data = { app:'kaoyan-workbench', version:1, exportedAt:new Date().toISOString() };
   keys.forEach(k => data[k] = Store.get(k, null));
   return JSON.stringify(data, null, 2);
@@ -527,7 +527,7 @@ function importData(jsonStr){
   }catch(e){ return { ok:false, msg:'文件解析失败' }; }
 }
 function clearAllData(){
-  const keys = ['settings','pos','backlog','completed','tasksSnap','tasksToday','lastDate','dailyStats','vocab','pomo','notes','customPlan','sportStart','doneStack','cloud'];
+  const keys = ['settings','pos','backlog','completed','tasksSnap','tasksToday','lastDate','dailyStats','vocab','pomo','notes','customPlan','sportStart','doneStack','cloud','avatar'];
   keys.forEach(k => localStorage.removeItem('ky_'+k));
 }
 
