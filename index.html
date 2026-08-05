@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>考研工作台 · 上岸加油</title>
+<!-- ===== PWA：iPhone/iPad/安卓 添加到主屏幕 ===== -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="考研工作台">
+<meta name="theme-color" content="#5BB8A3">
+<meta name="description" content="考研人的智能学习工作台：智能排课、番茄钟、背单词、打卡统计">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ======== 侧边栏 ======== -->
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-emoji">📚</span>
+      <div class="logo-text">
+        <b>考研工作台</b>
+        <small>坚持就是胜利</small>
+      </div>
+    </div>
+    <nav id="nav">
+      <a data-page="home" class="active"><span>🏠</span>今日首页</a>
+      <a data-page="tasks"><span>✅</span>每日任务</a>
+      <a data-page="pomodoro"><span>🍅</span>番茄钟</a>
+      <a data-page="vocab"><span>📖</span>背单词</a>
+      <a data-page="stats"><span>📊</span>打卡统计</a>
+      <a data-page="notes"><span>📝</span>错题本</a>
+      <a data-page="settings"><span>⚙️</span>设置</a>
+    </nav>
+    <div class="side-countdown" id="sideCountdown"></div>
+    <div class="side-tip" id="sideTip"></div>
+  </aside>
+
+  <!-- ======== 主内容区 ======== -->
+  <main class="main">
+
+    <!-- 首页 -->
+    <section class="page" id="page-home">
+      <div class="hero">
+        <div>
+          <h1 id="homeTitle">今天也要加油鸭 🦆</h1>
+          <p class="hero-sub" id="homeSub"></p>
+        </div>
+        <div class="countdown-badge" id="homeCountdown"></div>
+      </div>
+      <div id="homeQuote" class="quote-card"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>📋 今日任务</h3><a href="#" class="more-link" data-goto="tasks">全部 ›</a></div>
+          <div id="homeTasks" class="task-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>🗓️ 考试安排</h3></div>
+          <div id="examPlan" class="exam-plan"></div>
+          <div class="card-head" style="margin-top:18px"><h3>🔁 未来复习提醒</h3></div>
+          <div id="homeReviews" class="review-preview"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 每日任务 -->
+    <section class="page" id="page-tasks" style="display:none">
+      <div class="page-title">
+        <h2>✅ 每日任务</h2>
+        <p class="page-sub">未完成的任务会自动顺延到明天，不会跳过</p>
+      </div>
+      <div id="tasksProgress" class="progress-card"></div>
+      <div id="stageTimeline" class="stage-timeline"></div>
+      <div class="card">
+        <div class="card-head"><h3 id="tasksDateTitle">今日任务</h3><span class="pill" id="tasksCount"></span></div>
+        <div id="tasksList" class="task-list"></div>
+        <div class="task-actions" id="taskActions">
+          <button class="btn btn-ghost" id="btnUndoLast">↩️ 撤销上一次完成</button>
+          <button class="btn btn-ghost" id="btnResetToday">清空今日完成记录</button>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>🔮 明日任务预告</h3></div>
+          <div id="tomorrowPreview" class="tomorrow-preview"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>📈 各科学习进度</h3></div>
+          <div id="subjectProgress" class="subject-progress"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 番茄钟 -->
+    <section class="page" id="page-pomodoro" style="display:none">
+      <div class="page-title">
+        <h2>🍅 番茄钟</h2>
+        <p class="page-sub">专注 25 分钟，休息 5 分钟，效率翻倍</p>
+      </div>
+      <div class="pomo-wrap">
+        <div class="pomo-ring">
+          <svg viewBox="0 0 220 220" class="ring-svg">
+            <circle cx="110" cy="110" r="98" class="ring-bg"/>
+            <circle cx="110" cy="110" r="98" class="ring-fg" id="ringFg"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-time" id="pomoTime">25:00</div>
+            <div class="ring-state" id="pomoState">准备开始</div>
+          </div>
+        </div>
+        <div class="pomo-ctrl">
+          <div class="pomo-tabs">
+            <button class="pomo-tab active" data-mode="focus">🍅 专注</button>
+            <button class="pomo-tab" data-mode="break">☕ 休息</button>
+          </div>
+          <label class="pomo-bind">📌 本次专注任务：
+            <select id="pomoTask"></select>
+          </label>
+          <div class="pomo-btns">
+            <button class="btn btn-primary" id="pomoStart">▶ 开始</button>
+            <button class="btn btn-ghost" id="pomoPause">⏸ 暂停</button>
+            <button class="btn btn-ghost" id="pomoReset">↺ 重置</button>
+          </div>
+          <div class="pomo-stats">
+            <div class="pomo-stat"><b id="pomoToday">0</b><span>今日番茄</span></div>
+            <div class="pomo-stat"><b id="pomoTodayMin">0</b><span>今日专注(分)</span></div>
+            <div class="pomo-stat"><b id="pomoTotal">0</b><span>累计番茄</span></div>
+          </div>
+          <div class="pomo-tip" id="pomoTip">💡 休息时记得站起来活动、远眺、喝口水～</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 背单词 -->
+    <section class="page" id="page-vocab" style="display:none">
+      <div class="page-title">
+        <h2>📖 背单词</h2>
+        <p class="page-sub">每天推送新词 + 按遗忘曲线复习旧词</p>
+      </div>
+      <div class="vocab-overview" id="vocabOverview"></div>
+      <div class="card vocab-card">
+        <div id="vocabStage" class="vocab-stage"></div>
+        <div id="vocabWordArea" class="vocab-word-area"></div>
+      </div>
+    </section>
+
+    <!-- 打卡统计 -->
+    <section class="page" id="page-stats" style="display:none">
+      <div class="page-title">
+        <h2>📊 打卡统计</h2>
+        <p class="page-sub">每一天的坚持都算数</p>
+      </div>
+      <div class="stats-top">
+        <div class="stat-card"><b id="statStreak">0</b><span>连续打卡(天)</span></div>
+        <div class="stat-card"><b id="statTotalDays">0</b><span>累计学习(天)</span></div>
+        <div class="stat-card"><b id="statTotalTasks">0</b><span>完成任务(个)</span></div>
+        <div class="stat-card"><b id="statTotalFocus">0</b><span>累计专注(分)</span></div>
+        <div class="stat-card"><b id="statTotalVocab">0</b><span>学过单词(个)</span></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>🔥 打卡热力图（近 4 个月）</h3></div>
+        <div id="heatmap" class="heatmap"></div>
+        <div class="heat-legend"><span>少</span><i></i><i></i><i></i><i></i><i></i><span>多</span></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>📆 最近 30 天明细</h3></div>
+        <div id="recentDays" class="recent-days"></div>
+      </div>
+    </section>
+
+    <!-- 错题本 -->
+    <section class="page" id="page-notes" style="display:none">
+      <div class="page-title">
+        <h2>📝 错题本</h2>
+        <p class="page-sub">记录错题和心得，考前翻一翻</p>
+      </div>
+      <div class="card">
+        <div class="note-form">
+          <select id="noteSubject">
+            <option value="数学二">📐 数学二</option>
+            <option value="英语一">📖 英语一</option>
+            <option value="政治">🏛️ 政治</option>
+            <option value="专业课">📚 专业课</option>
+          </select>
+          <input type="text" id="noteInput" placeholder="记录一个错题 / 知识点 / 易错点…">
+          <button class="btn btn-ghost" id="noteImgBtn">📷 拍照/传图</button>
+          <input type="file" id="noteImgInput" accept="image/*" style="display:none">
+          <button class="btn btn-primary" id="noteAdd">＋ 添加</button>
+        </div>
+        <div id="noteImgPreview" class="note-img-preview" style="display:none">
+          <img id="noteImgPreviewImg" alt="待添加图片">
+          <span class="note-img-del" id="noteImgDel">✕ 移除</span>
+        </div>
+        <div id="noteFilter" class="note-filter">
+          <button class="chip active" data-f="all">全部</button>
+          <button class="chip" data-f="数学二">数学二</button>
+          <button class="chip" data-f="英语一">英语一</button>
+          <button class="chip" data-f="政治">政治</button>
+          <button class="chip" data-f="专业课">专业课</button>
+        </div>
+        <div id="noteList" class="note-list"></div>
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section class="page" id="page-settings" style="display:none">
+      <div class="page-title">
+        <h2>⚙️ 设置</h2>
+        <p class="page-sub">按自己的节奏调整</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>🎯 考试信息</h3></div>
+          <div class="form-row">
+            <label>考研初试日期</label>
+            <input type="date" id="setExamDate">
+          </div>
+          <div class="form-row">
+            <label>考研年份（用于倒计时文案）</label>
+            <input type="number" id="setExamYear" min="2026" max="2030">
+          </div>
+          <div class="form-row">
+            <label>基础学习期截止：考前多少天</label>
+            <input type="number" id="setBaseOffset" min="45" max="150">
+          </div>
+          <div class="form-row">
+            <label>冲刺期开始：考前多少天</label>
+            <input type="number" id="setSprintOffset" min="14" max="80">
+          </div>
+          <p class="hint" style="margin-top:6px">默认：考前 90 天结束基础期（学知识点），考前 35 天进入冲刺期（真题/模考/背诵），中间是刷题期。排课会自动按此节奏推送，保证知识点提前学完。</p>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>📅 每日任务配额</h3></div>
+          <div class="form-row">
+            <label>数学二 每天新任务</label>
+            <input type="number" id="setQMath" min="0" max="3">
+          </div>
+          <div class="form-row">
+            <label>英语一 每天新任务</label>
+            <input type="number" id="setQEnglish" min="0" max="3">
+          </div>
+          <div class="form-row">
+            <label>政治 每天新任务</label>
+            <input type="number" id="setQPolitics" min="0" max="3">
+          </div>
+          <div class="form-row">
+            <label>专业课 每天新任务</label>
+            <input type="number" id="setQCustom" min="0" max="3">
+          </div>
+          <div class="form-row">
+            <label>每日任务上限（防积压）</label>
+            <input type="number" id="setMaxTasks" min="4" max="15">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>🏃 运动日</h3></div>
+          <div class="form-row">
+            <label>每周运动日</label>
+            <select id="setSportDay">
+              <option value="1">周一</option><option value="2">周二</option><option value="3">周三</option>
+              <option value="4">周四</option><option value="5">周五</option><option value="6">周六</option>
+              <option value="7">周日</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label><input type="checkbox" id="setSportReduce"> 运动日减少新任务（只做复习和未完成）</label>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>🍅 番茄钟 & 📖 单词</h3></div>
+          <div class="form-row">
+            <label>专注时长（分钟）</label>
+            <select id="setPomoWork">
+              <option value="15">15 分钟</option><option value="25" selected>25 分钟</option><option value="45">45 分钟</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>休息时长（分钟）</label>
+            <select id="setPomoBreak">
+              <option value="5" selected>5 分钟</option><option value="10">10 分钟</option><option value="15">15 分钟</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>每日新词数量</label>
+            <select id="setVocabPerDay">
+              <option value="20">20 个</option><option value="40" selected>40 个</option><option value="60">60 个</option>
+            </select>
+          </div>
+        </div>
+        <div class="card span-2">
+          <div class="card-head"><h3>📚 专业课自定义任务</h3><button class="btn btn-small" id="btnCustomAdd">＋ 添加一行</button></div>
+          <p class="hint">因为不同专业大纲不同，这里可以自己录入专业课复习任务（如章节名），系统会按顺序每天推送一课。</p>
+          <div id="customPlanEditor"></div>
+          <button class="btn btn-primary" id="btnCustomSave">保存专业课任务</button>
+        </div>
+        <div class="card span-2">
+          <div class="card-head"><h3>💾 数据备份</h3></div>
+          <p class="hint">数据保存在本浏览器中。换电脑 / 清理浏览器前，请先导出备份；在新电脑上导入即可继续。</p>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnExport">⬇️ 导出备份</button>
+            <button class="btn btn-ghost" id="btnImport">⬆️ 导入备份</button>
+            <input type="file" id="importFile" accept=".json" style="display:none">
+            <button class="btn btn-danger" id="btnClear">🗑️ 清空全部数据</button>
+          </div>
+        </div>
+        <div class="card span-2">
+          <div class="card-head"><h3>☁️ 云同步与账号（推荐开启）</h3><span class="pill" id="cloudStatus"></span></div>
+          <p class="hint">登录账号后，数据自动存到云端——<b>换电脑、重装、清理浏览器都不丢</b>；iPhone / iPad / 安卓 / 电脑登录同一个账号，数据自动同步。</p>
+          <div id="cloudLoginBox">
+            <div class="form-row"><label>项目 URL（Project URL）</label><input type="text" id="cloudUrl" placeholder="https://xxx.supabase.co" style="width:46%"></div>
+            <div class="form-row"><label>anon 公钥（anon public key）</label><input type="password" id="cloudAnonKey" placeholder="eyJhbGciOi..." style="width:46%"></div>
+            <div class="form-row"><label>邮箱</label><input type="email" id="cloudUser" placeholder="用于登录的邮箱" style="width:46%"></div>
+            <div class="form-row"><label>密码</label><input type="password" id="cloudPass" placeholder="至少 6 位" style="width:46%"></div>
+            <div class="btn-row" style="margin-top:12px">
+              <button class="btn btn-primary" id="btnCloudLogin">🔑 登录</button>
+              <button class="btn btn-ghost" id="btnCloudRegister">✨ 注册新账号</button>
+              <button class="btn btn-ghost" id="btnCloudSyncNow">🔄 立即同步</button>
+            </div>
+            <p class="hint" style="margin-top:10px" id="cloudGuide">还没有配置？① 打开 <b>supabase.com</b> 用邮箱注册（免费）→ ② 创建项目（区域选 <b>Singapore 或 Tokyo</b>）→ ③ 左侧 <b>Settings → API</b>，复制 <b>Project URL</b> 和 <b>anon public key</b> 填到上面 → ④ 到 <b>SQL Editor</b> 执行建表语句（见使用说明）→ 然后注册/登录即可。</p>
+          </div>
+          <div id="cloudLogoutBox" style="display:none">
+            <p class="hint" id="cloudAccountInfo"></p>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="btnCloudSyncNow2">🔄 立即同步</button>
+              <button class="btn btn-ghost" id="btnCloudLogout">👋 退出登录</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- 图片查看弹窗 -->
+<div id="imageModal" class="modal-overlay" style="display:none" onclick="this.style.display='none'">
+  <img id="imageModalImg" style="max-width:94vw;max-height:88vh;border-radius:12px;background:#fff;padding:6px;box-shadow:0 18px 50px rgba(0,0,0,.3)">
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- 单词列表弹窗 -->
+<div id="wordModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeWordModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="wordModalTitle"></h3>
+      <span class="modal-close" onclick="closeWordModal()">✕</span>
+    </div>
+    <div id="wordModalList" class="modal-list"></div>
+  </div>
+</div>
+
+<script src="js/data/syllabus_math.js"></script>
+<script src="js/data/syllabus_english.js"></script>
+<script src="js/data/syllabus_politics.js"></script>
+<script src="js/data/vocab1.js"></script>
+<script src="js/data/vocab2.js"></script>
+<script src="js/data/vocab3.js"></script>
+<script src="js/data/vocab4.js"></script>
+<script src="js/data/quotes.js"></script>
+<script src="js/core.js"></script>
+<script src="js/pomodoro.js"></script>
+<script src="js/vocab.js"></script>
+<script src="js/ui.js"></script>
+<script>
+/* 注册 Service Worker（http 访问时启用：离线缓存 + 主屏幕 App 体验） */
+if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
